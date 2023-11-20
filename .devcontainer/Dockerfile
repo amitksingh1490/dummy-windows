@@ -1,5 +1,5 @@
 # Use Windows Server Core as a base image
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
 
 # Set shell to PowerShell for convenience
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop';"]
