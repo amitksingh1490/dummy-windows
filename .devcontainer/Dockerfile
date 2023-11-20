@@ -1,17 +1,22 @@
-# Use a Windows Server Core base image with .NET Framework 4.8
-FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
+FROM mcr.microsoft.com/windows/servercore:1803 as installer
 
-# Install Node.js
-RUN Invoke-WebRequest -Uri "https://nodejs.org/dist/v14.17.0/node-v14.17.0-x64.msi" -OutFile "nodejs.msi" -UseBasicParsing ; \
-    Start-Process -FilePath "nodejs.msi" -ArgumentList "/quiet" -Wait ; \
-    Remove-Item -Force "nodejs.msi"
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop';$ProgressPreference='silentlyContinue';"]
 
-# Set up environment variables for Node.js and npm
-ENV PATH="C:\\Program Files\\nodejs;${PATH}"
+RUN Invoke-WebRequest -OutFile nodejs.zip -UseBasicParsing "https://nodejs.org/dist/v12.4.0/node-v12.4.0-win-x64.zip"; `
+Expand-Archive nodejs.zip -DestinationPath C:\; `
+Rename-Item "C:\\node-v12.4.0-win-x64" c:\nodejs
 
-# Check node and npm versions
-RUN node --version ; \
-    npm --version
+FROM mcr.microsoft.com/windows/nanoserver:1803
 
-# Create a working directory
-WORKDIR C:/workspace
+WORKDIR C:\nodejs
+COPY --from=installer C:\nodejs\ .
+RUN SETX PATH C:\nodejs
+RUN npm config set registry https://registry.npmjs.org/
+
+WORKDIR /app
+
+RUN npm install -g @tailcallhq/tailcall
+
+
+# start app
+CMD tc check
